@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-
 import TheLogin from '@/views/TheLogin.vue'
 import TheHome from '@/views/TheHome.vue'
 

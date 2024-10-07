@@ -22,7 +22,7 @@
               <th>Статус</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="!loading">
             <tr v-for="(appeal, index) in appeals" :key="index" @click="editAppeal(index)">
               <td><div class="num">{{ appeal.number }}</div></td>
               <td>{{ new Date(appeal.created_at).toLocaleDateString() }}</td>
@@ -33,15 +33,22 @@
               <td>{{ appeal.status?.name }}</td>
             </tr>
           </tbody>
+          <tbody v-if="loading">
+            <tr v-for="i of pageSize" :key="i">
+              <td v-for="j of 7" :key="j">
+                <div class="loading"></div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
       <div class="settings">
-        <PageSize :page="this.page" :pages="this.pages" :count="this.count" :pageSize="this.pageSize" />
-        <PageScroll :page="this.page" :pages="this.pages" :pageSize="this.pageSize" @switch-page="switchPage" />
+        <PageSize :page="this.page" :pages="this.pages" :count="this.count" :pageSize="this.pageSize" @page-size-change="changePageSize" />
+        <PageScroll v-if="!loading" :page="this.page" :pages="this.pages" :pageSize="this.pageSize" @switch-page="switchPage" />
       </div>
     </div>
-    <PopUp :opened="popUp" @close="popUp = false" />
-    <PopUp :opened="popUpEdit" :data="editData" @close="popUpEdit = false" />
+    <PopUp v-if="popUp" @close="closeSuccess" @loading="$emit('loading')" />
+    <PopUp v-if="popUpEdit" :data="editData" @close="closeSuccess" @loading="$emit('loading')" />
   </div>
 </template>
 
@@ -62,7 +69,8 @@ export default {
     ...mapMutations(['setAppeals', 'setPremises']),
 
     fetchAppeals() {
-      axios.get(`https://dev.moydomonline.ru/api/appeals/v1.0/appeals/?page_size=${this.pageSize}&?page=${this.page}${this.search!==""?"&search="+this.search:""}${this.premiseId!==""?"&premise_id="+this.premiseId:""}`, { 
+      this.loading = true
+      axios.get(`https://dev.moydomonline.ru/api/appeals/v1.0/appeals/?page_size=${this.pageSize}&page=${this.page}${this.search!==""?"&search="+this.search:""}${this.premiseId!==""?"&premise_id="+this.premiseId:""}`, { 
         headers: { 'Authorization' : `Token ${this.key}` }
       })
       .then(response => {
@@ -70,10 +78,11 @@ export default {
         this.count = response.data.count
         this.appeals = response.data.results
         this.setAppeals(this.appeals)
+        this.loading = false
       })
       .catch(response => {
         if (response.status === 403) 
-          alert('403 Unauthorized') 
+          this.$emit('message', { message: 'Вы не авторизованы!', warning: true })
           this.$router.replace('/login')
       })
     },
@@ -101,8 +110,23 @@ export default {
       this.popUpEdit = true
     },
 
+    closeSuccess(msg) {
+      this.popUp = false
+      this.popUpEdit = false
+      if(msg) {
+        this.$emit('message', msg)
+        this.$emit('loading')
+        this.fetchAppeals()
+      }
+    },
+
     switchPage(page) {
       this.page = page
+      this.fetchAppeals()
+    },
+
+    changePageSize(size) {
+      this.pageSize = size
       this.fetchAppeals()
     },
     
@@ -118,6 +142,7 @@ export default {
   },
   data() {
     return {
+      loading: true,
       page: 1,
       pages: null,
       count: null,
@@ -151,12 +176,10 @@ $green-light: rgba(66, 177, 66, 0.3);
 $red: rgb(222, 64, 64);
 
 .all {
-  font-family: Arial, Helvetica, sans-serif;
   background-color: #ddd;
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 40px;
   left: 0;
   top: 0;
   right: 0;
@@ -167,6 +190,7 @@ $red: rgb(222, 64, 64);
   .label {
     font-size: 20px;
     margin-left: 12px;
+    height: 10vh;
   }
 
   .body {
@@ -176,7 +200,7 @@ $red: rgb(222, 64, 64);
     background-color: #fff;
     display: flex;
     gap: 30px;
-    max-height: 80vh;
+    max-height: 76vh;
     flex-direction: column;
 
     .create {
@@ -210,18 +234,33 @@ $red: rgb(222, 64, 64);
   }
 
   thead, th {
+    padding: 10px;
     position: sticky;
     top: 0;
     text-align: left;
-    font-weight: 200;
-    color: $green;
-    border-bottom: 1px solid #ccc;
+    font-weight: normal;
     background-color: white;
+    color: $green;
+  }
+
+  tr:hover {
+    cursor: pointer;
+    background-color: #eeeeee99;
   }
 
   td {
+    padding: 0 10px;
     height: 60px;
     border-bottom: 1px solid #ccc;
+    word-break: break-all;
+  }
+
+  .loading {
+    background-color: #ddd;
+    width: 90%;
+    height: 20px;
+    border-radius: 4px;
+    animation: blink 2s infinite linear;
   }
   
   .num {
@@ -232,6 +271,12 @@ $red: rgb(222, 64, 64);
     border-radius: 4px;
     padding: 5px 2px;
   }
+}
+
+@keyframes blink {
+  0% { opacity: 1 }
+  50% { opacity: 0.4 }
+  100% { opacity: 1 }
 }
 
 </style>

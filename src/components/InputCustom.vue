@@ -1,5 +1,5 @@
 <template>
-  <div class="container" :style="{ alignItems: textarea ? 'baseline' : 'center',  }">
+  <div class="container" :style="{ alignItems: textarea ? 'baseline' : 'center' }">
     <span class="placeholder">{{ name }}</span>
     <input v-if="!textarea" required :type="type" placeholder=" " @change="select" :value="value"> 
     <textarea v-if="textarea" required placeholder=" " @change="select" v-model="textareaValue"></textarea>
@@ -51,6 +51,7 @@ $green: rgb(66, 177, 66);
     height: 38px;
     border: none;
     background: none;
+
     &:focus {
       outline: none;
     }
@@ -62,6 +63,7 @@ $green: rgb(66, 177, 66);
     height: 100px;
     border: none;
     background: none;
+    
     &:focus {
       outline: none;
     }

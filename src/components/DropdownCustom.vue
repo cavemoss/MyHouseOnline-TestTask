@@ -2,15 +2,11 @@
   <div class="container">
     <div class="input">
       <span class="placeholder">{{ name }}</span>
-      <input required type="text" placeholder=" " v-model="selected" >
+      <input required type="text" placeholder=" " v-model="selected" :style="{ maxWidth: width }">
       <img src="../assets/icons/drop.svg">
     </div>
-    <div class="dropdown">
-      <div v-for="(option, index) in options" 
-      :key="index" 
-      class="option" 
-      @click="select(option)"
-      >
+    <div class="dropdown" :style="{ height: dropdownHeight }">
+      <div v-for="(option, index) in options" :key="index" class="option" @click="select(option)">
         {{ option }}
       </div>
     </div>
@@ -24,7 +20,9 @@ export default {
     value: String,
     name: String,
     options: Array,
-    setter: Function
+    setter: Function,
+    dropdownHeight: String,
+    width: String,
   },
   data() {
     return {
@@ -70,6 +68,7 @@ $green: rgb(66, 177, 66);
     .option{
       padding: 4px;
       cursor: pointer;
+      
       &:hover {
         background-color: #ddd;
       }

@@ -21,7 +21,6 @@
 <script>
 import axios from 'axios'
 import { mapMutations } from 'vuex'
-
 export default {
 
   data() {
@@ -38,6 +37,7 @@ export default {
       try 
       {
         if (!this.username || !this.password) { this.error = 'Есть пустые поля'; return }
+        this.$emit('loading')
         // Login POST Request
         const response = await axios.post('https://dev.moydomonline.ru/api/auth/login/', {
           username: this.username,
@@ -45,6 +45,7 @@ export default {
         })
         // Setting the access token
         this.setKey(response.data.key)
+        this.$emit('loading')
         this.$router.push('/')
       } 
       catch { this.error = 'Неверные данные' }
@@ -60,15 +61,13 @@ $green-light: rgba(66, 177, 66, 0.3);
 $red: rgb(222, 64, 64);
 
 .all {
-  font-family: Arial, Helvetica, sans-serif;
   width: 100%;
   height: 100%;
   display: flex;
   position: absolute;
   left: 0;
   top: 0; 
-  color: #222;
-  background-color: #ddd;
+  background: url(../assets/bg.webp);
 }
 
 .card {
@@ -86,9 +85,7 @@ $red: rgb(222, 64, 64);
     display: flex;
     align-items: center;
     width: 100%;
-    height: 30px;
     gap: 5px;
-    padding-bottom: 5px;
     border-bottom: 1px solid #bbb;
 
     img {
@@ -99,14 +96,14 @@ $red: rgb(222, 64, 64);
       flex: 10;
       border: none;
       background: none;
-      height: 100%;
+      height: 40px;
 
       &:focus {
         outline: none;
       }
     }
 
-    $placeholder-offset: -40px;
+    $placeholder-offset: -52px;
 
     .error-color {
       color: $red !important;
@@ -115,7 +112,7 @@ $red: rgb(222, 64, 64);
     .placeholder {
       position: absolute;
       margin-left: 38px;
-      font-size: 14px;
+      font-size: 15px;
       transition: all 100ms;
       pointer-events: none;
       color: #aaa;
@@ -143,6 +140,7 @@ $red: rgb(222, 64, 64);
     text-align: center;
     color: white;
     margin-bottom: -26px;
+    font-size: 18px;
   }
 
   .error {

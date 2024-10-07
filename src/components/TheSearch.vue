@@ -1,5 +1,5 @@
 <template>
-  <div class="container" @keydown="submit">
+  <div class="container" @change="submit">
     <span class="placeholder">Поиск (&#8470; заявки, название)</span>
     <input type="text" placeholder=" " v-model="prompt">
     <img src="../assets/icons/search.svg">
@@ -15,11 +15,9 @@ export default {
     }
   },
   methods: {
-    submit(event) {
-      if (event.key === 'Enter') {
-        if (this.prompt === '') this.$emit('prompted', '')
-        else this.$emit('prompted', this.prompt)
-      }
+    submit() {
+      if (this.prompt === '') this.$emit('prompted', '')
+      else this.$emit('prompted', this.prompt)
     }
   }
 }

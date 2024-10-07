@@ -1,20 +1,20 @@
 <template>
-  <div class="overlay" v-if="opened" @click.self="$emit('close')">
+  <div class="overlay" @click.self="$emit('close')">
     <form class="card" @submit.prevent="submit">
       <div class="row header">
         <b>{{ label }}</b>
-        <span>Новая</span>
+        <span>{{ data ? data.status.name ?? 'Новая' : 'Новая' }}</span>
       </div>
       <div class="row">
-        <DropdownCustom :value="data?.premise.full_address" :setter="setPremiseId" name="Дом" :options="premises.map(obj => obj.full_address)" />
-        <DropdownCustom :value="data?.apartment.number" :setter="setApartmentId" name="Квартира" :options="apartments.map(obj => obj.number)" />
-        <InputCustom :value="data?.due_date" name="Срок" type="date" :setter="(value) => setField('dueDate', value)" />
+        <DropdownCustom :value="data?.premise?.full_address" :setter="setPremiseId" name="Дом" :options="premises.map(obj => obj.full_address)" />
+        <DropdownCustom :value="data?.apartment?.number" :setter="setApartmentId" name="Квартира" :options="apartments.map(obj => obj.number)" />
+        <InputCustom :value="data?.due_date.split('T')[0]" name="Срок" type="date" :setter="(value) => setField('dueDate', value)" />
       </div>
       <div class="row">
-        <InputCustom :value="data?.applicant.last_name" name="Фамилия" :setter="(value) => setField('lastName', value)" />
-        <InputCustom :value="data?.applicant.first_name" name="Имя" :setter="(value) => setField('firstName', value)" />
-        <InputCustom :value="data?.applicant.patronymic_name" name="Отчество" :setter="(value) => setField('patronymicName', value)" />
-        <InputCustom :value="data?.applicant.username" name="Телефон" type="tel" :setter="(value) => setField('username', value)" />
+        <InputCustom :value="data?.applicant?.last_name" name="Фамилия" :setter="(value) => setField('lastName', value)" />
+        <InputCustom :value="data?.applicant?.first_name" name="Имя" :setter="(value) => setField('firstName', value)" />
+        <InputCustom :value="data?.applicant?.patronymic_name" name="Отчество" :setter="(value) => setField('patronymicName', value)" />
+        <InputCustom :value="data?.applicant?.username" name="Телефон" type="tel" :setter="(value) => setField('username', value)" />
       </div>
       <div class="row">
         <InputCustom :value="data?.description" textarea name="Описание заявки" :setter="(value) => setField('description', value)" />
@@ -35,7 +35,6 @@ import InputCustom from './InputCustom.vue'
 export default {
   name: 'PopUp',
   props: {
-    opened: Boolean,
     data: Object
   },
   components: {
@@ -62,16 +61,24 @@ export default {
       apartments: []
     }
   },
+  mounted() {
+    if (this.data) {
+      this.premiseId = this.data.premise.id
+      this.fetchApartments()
+    }
+  },
   methods: {
-    async setPremiseId(address) {
-      let response
 
-      response = await axios.get(`https://dev.moydomonline.ru/api/geo/v2.0/user-premises/?search=${address}`, {
+    async setPremiseId(address) {
+      const response = await axios.get(`https://dev.moydomonline.ru/api/geo/v2.0/user-premises/?search=${address}`, {
         headers: { 'Authorization' : `Token ${this.key}` }
       })
       this.premiseId = response.data.results[0].id
+      this.fetchApartments()
+    },
 
-      response = await axios.get(`https://dev.moydomonline.ru/api/geo/v1.0/apartments/?premise_id=${this.premiseId}`, {
+    async fetchApartments() {
+      const response = await axios.get(`https://dev.moydomonline.ru/api/geo/v1.0/apartments/?premise_id=${this.premiseId}`, {
         headers: { 'Authorization' : `Token ${this.key}` }
       })
       this.apartments = response.data.results.map(obj => { 
@@ -81,7 +88,10 @@ export default {
 
     setApartmentId(number) {
       for (let obj of this.apartments) {
-        if (obj.number === number) { this.apartmentId = obj.id; break }
+        if (obj.number === number) { 
+          this.apartmentId = obj.id 
+          break 
+        }
       }
     },
 
@@ -100,7 +110,7 @@ export default {
           "username": this.username || this.data.applicant.username,
         },
         "description": this.description || this.data.description,
-        "due_date": this.formatDate(this.data.due_date || this.dueDate),
+        "due_date": this.formatDate(this.dueDate || this.data.due_date),
         "status_id": 1
       }
       if(patch) data = { 
@@ -113,22 +123,23 @@ export default {
     },
 
     submit() {
-      if(this.data) this.edit()
+      this.$emit('loading')
+      if (this.data) this.edit()
       else this.create()
     },
 
-    create() {
-      axios.post('https://dev.moydomonline.ru/api/appeals/v1.0/appeals/', this.payload(), {
+    async create() {
+      const response = await axios.post('https://dev.moydomonline.ru/api/appeals/v1.0/appeals/', this.payload(), {
         headers: { 'Authorization' : `Token ${this.key}` }
       })
-      .then(response => { if (response.status === 201) this.$emit('close') })
+      if (response.status === 201) this.$emit('close', { message: 'Новая заявка опубликована!', warning: false })
     },
 
-    edit() {
-      axios.patch(`https://dev.moydomonline.ru/api/appeals/v1.0/appeals/${this.data.id}/`, this.payload(true), {
+    async edit() {
+      const response = await axios.patch(`https://dev.moydomonline.ru/api/appeals/v1.0/appeals/${this.data.id}/`, this.payload(true), {
         headers: { 'Authorization' : `Token ${this.key}` }
       })
-      .then(response => { if (response.status === 200) this.$emit('close') })
+      if (response.status === 200) this.$emit('close', { message: 'Заявка отредактирована!', warning: false })
     }
   }
 }
@@ -149,6 +160,7 @@ $green-light: rgba(66, 177, 66, 0.3);
 }
 
 .card {
+  width: 800px;
   margin: auto;
   padding: 30px;
   border-radius: 8px;

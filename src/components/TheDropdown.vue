@@ -1,8 +1,8 @@
 <template>
-  <div class="container" @keydown="submit">
+  <div class="container">
     <div class="input-container"  >
       <span class="placeholder">{{ name }}</span>
-      <input type="text" placeholder=" " v-model="selected">
+      <input type="text" placeholder=" " v-model="selected" @change="submit">
       <img src="../assets/icons/drop.svg">
     </div>
     <div class="dropdown" @keydown="submit">
@@ -38,12 +38,11 @@ export default {
     select(option) {
       this.selected = option.address
       this.premiseId = option.id
+      this.submit()
     },
-    submit(event) {
-      if (event.key === 'Enter') {
-        if (this.selected === '') this.$emit(`${this.name}-selected`, '')
-        else this.$emit(`${this.name}-selected`, this.premiseId)
-      }
+    submit() {
+      if (this.selected === '') this.$emit(`${this.name}-selected`, '')
+      else this.$emit(`${this.name}-selected`, this.premiseId)
     }
   }
 }
