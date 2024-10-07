@@ -10,7 +10,11 @@
       <div class="input"> <!-- password -->
         <img src="../assets/icons/lock.svg" height="25">
         <span class="placeholder" :class="{ 'error-color' : error }">Пароль</span>
-        <input type="password" placeholder=" " v-model="password" @input="unsetError">
+        <input ref="pwd" :type="pwdShown? 'text' : 'password' " placeholder=" " v-model="password" @input="unsetError">
+        <div style="cursor: pointer" @click="pwdShown=!pwdShown">
+          <img v-if="!pwdShown" height="24" src="../assets/icons/pwd-hide.svg">
+          <img v-if="pwdShown" height="24" src="../assets/icons/pwd-show.svg">
+        </div>
       </div>
       <div v-if="error" class="error">{{ error }}</div>
       <button type="submit">Войти</button>
@@ -27,6 +31,7 @@ export default {
     return {
       username: '',
       password: '',
+      pwdShown: false,
       error: null
     }
   },
